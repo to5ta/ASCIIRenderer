@@ -34,7 +34,7 @@ for y in range(0, imgdata.shape[0]):
     for x in range(0, imgdata.shape[1]):
         px = imgdata[y][x]
         # char = rmp[len(rmp) -1- px//len(rmp)]
-        char = ar[px//len(ar)]
+        char = ar[min(len(ar)-1, min(px, 255)//len(ar))]
 
         print(char, end="")
     print()
