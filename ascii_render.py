@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from cgitb import reset
 from email.mime import image
 import shutil
 import sys
@@ -9,33 +10,36 @@ size = shutil.get_terminal_size()
 print(f"Size: {size}")
 GLYPH_SIZE_RATIO = 1/2.
 
-ar = [ "@", "#", "S", "%", "?", "*", "+", ";", ":", ",", "." ]
+ar = [ "@#S%?*+;:,." ]
 rmp  = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,\"^`'. "
 
-img = Image.open(sys.argv[1])
+def main():
+    imgdata = getGreyScaleDataFromImage(sys.argv[1])
+    charImgStr = renderGreyScaleDataToASCII(imgdata, ar)
+    print(charImgStr)
+    with open("result.txt", "w") as file:
+        file.write(charImgStr)
 
-ratio = img.size[0] / img.size[1]
+def getGreyScaleDataFromImage(filepath: str, pixel_to_column_ratio: float = 0.05):
+    img = Image.open(filepath)
+    x = img.size[0] * pixel_to_column_ratio;
+    y = img.size[1] * pixel_to_column_ratio * GLYPH_SIZE_RATIO
+    img = img.resize([ int(x), int(y)])
+    img = img.convert("L")
+    imgdata = np.asarray(img)
+    np.linalg.norm(imgdata)
+    imgdata *= 255
+    return imgdata 
 
-x = size.columns
-y = img.size[1] / (img.size[0] / size.columns) * GLYPH_SIZE_RATIO
+def renderGreyScaleDataToASCII(imgdata: np.array, ramp: str):
+    result = ""
+    for y in range(0, imgdata.shape[0]):
+        for x in range(0, imgdata.shape[1]):
+            px = imgdata[y][x]
+            char = ramp[min(len(ramp)-1, min(px, 255)//len(ramp))]
+            result += char
+        result += "\n"
+    return result
 
-img = img.resize([ int(x), int(y)])
-img = img.convert("L")
-
-imgdata = np.asarray(img)
-
-np.linalg.norm(imgdata)
-imgdata *= 255
-img.putdata(imgdata.flatten())
-# img.show()
-# print(f"Shape {imgdata.shape}")
-
-for y in range(0, imgdata.shape[0]):
-    for x in range(0, imgdata.shape[1]):
-        px = imgdata[y][x]
-        # char = rmp[len(rmp) -1- px//len(rmp)]
-        char = ar[min(len(ar)-1, min(px, 255)//len(ar))]
-
-        print(char, end="")
-    print()
-        # print("h", end="")
+if __name__ == "__main__":
+    main()
